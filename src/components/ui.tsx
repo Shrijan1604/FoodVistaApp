@@ -1,0 +1,9 @@
+import { ReactNode } from 'react';
+import { ActivityIndicator, Pressable, PressableProps, StyleSheet, Text, TextInput, TextInputProps, View, ViewProps } from 'react-native';
+import { colors } from '../constants/theme';
+export function Page({ children, style, ...props }: ViewProps) { return <View style={[s.page, style]} {...props}>{children}</View>; }
+export function Heading({ title, subtitle }: { title: string; subtitle?: string }) { return <View style={{ gap: 6 }}><Text style={s.title}>{title}</Text>{subtitle ? <Text style={s.subtitle}>{subtitle}</Text> : null}</View>; }
+export function Button({ children, loading, style, ...props }: PressableProps & { children: ReactNode; loading?: boolean }) { return <Pressable style={[s.button, style]} disabled={loading || props.disabled} {...props}>{loading ? <ActivityIndicator color="white" /> : typeof children === 'string' ? <Text style={s.buttonText}>{children}</Text> : children}</Pressable>; }
+export function Field(props: TextInputProps) { return <TextInput placeholderTextColor={colors.muted} style={s.field} {...props} />; }
+export function Eyebrow({ children }: { children: string }) { return <Text style={s.eyebrow}>{children.toUpperCase()}</Text>; }
+export const s = StyleSheet.create({ page: { flex: 1, backgroundColor: colors.canvas, paddingHorizontal: 24, paddingTop: 20 }, title: { fontSize: 31, fontWeight: '700', color: colors.ink, letterSpacing: -0.7 }, subtitle: { fontSize: 15, color: colors.muted, lineHeight: 22 }, button: { height: 54, borderRadius: 18, backgroundColor: colors.green, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 22 }, buttonText: { color: 'white', fontSize: 16, fontWeight: '700' }, field: { height: 54, borderRadius: 15, backgroundColor: colors.paper, paddingHorizontal: 16, fontSize: 16, color: colors.ink, borderWidth: 1, borderColor: colors.line }, eyebrow: { fontSize: 11, fontWeight: '800', letterSpacing: 1.4, color: colors.muted } });
