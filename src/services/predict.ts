@@ -5,7 +5,13 @@ export async function predictMeal(uri: string): Promise<Meal> {
   const form = new FormData();
   form.append('image', { uri, name: 'meal.jpg', type: 'image/jpeg' } as unknown as Blob);
   const response = await fetch(endpoint, { method: 'POST', body: form, headers: { Accept: 'application/json' } });
-  if (!response.ok) throw new Error(`Food recognition failed (${response.status}). Try another photo.`);
-  const json = await response.json();
+  const json = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    if (response.status === 422) throw new Error(json.message ?? 'This photo looks blurry or too dark. Retake it in brighter light with the full plate in focus.');
+    throw new Error(json.message ?? `Food recognition failed (${response.status}). Try again.`);
+  }
+  if (typeof json.dishName !== 'string' || !json.dishName || !json.macros || !Number.isFinite(json.macros.calories) || !Number.isFinite(json.macros.protein) || !Number.isFinite(json.macros.carbs) || !Number.isFinite(json.macros.fats)) {
+    throw new Error('The recognition service returned incomplete nutrition data. Try again.');
+  }
   return { timestamp: new Date(), dishName: json.dishName, ingredients: json.ingredients ?? [], portion: json.portion ?? '1 serving', macros: json.macros, micros: json.micros, imageUrl: json.imageUrl };
 }

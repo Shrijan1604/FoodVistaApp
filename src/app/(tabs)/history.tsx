@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Utensils, ChevronRight } from 'lucide-react-native';

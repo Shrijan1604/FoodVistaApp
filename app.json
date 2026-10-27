@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "FoodVistaApp",
-    "slug": "FoodVistaApp",
+    "name": "Food Vista",
+    "slug": "food-vista",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "foodvistaapp",
+    "scheme": "foodvista",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon"
@@ -26,9 +26,18 @@
     "plugins": [
       "expo-router",
       [
+        "expo-camera",
+        {
+          "cameraPermission": "Food Vista uses your camera to identify meals.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      "expo-sensors",
+      [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#F7F7F2",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }

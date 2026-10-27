@@ -1,19 +1,51 @@
-import { addDoc, collection, getDocs, orderBy, query, Timestamp, where } from 'firebase/firestore';
-import { db } from './firebase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
+
 export type Meal = {
-  id?: string; timestamp: Date; dishName: string; ingredients: string[];
-  portion: string; macros: { calories: number; protein: number; carbs: number; fats: number };
-  micros?: { fiber?: number; sugar?: number; sodium?: number; vitamins?: string[] }; imageUrl?: string;
+  id?: string;
+  timestamp: Date;
+  dishName: string;
+  ingredients: string[];
+  portion: string;
+  macros: { calories: number; protein: number; carbs: number; fats: number };
+  micros?: { fiber?: number; sugar?: number; sodium?: number; vitamins?: string[] };
+  imageUrl?: string;
 };
-export async function saveMeal(uid: string, meal: Meal) {
-  if (!db) throw new Error('Connect Firebase to save meals.');
-  const { id, ...data } = meal;
-  await addDoc(collection(db, 'users', uid, 'meals'), { ...data, timestamp: Timestamp.fromDate(meal.timestamp) });
+
+type MealState = { meals: Meal[]; addMeal: (meal: Meal) => void };
+const useMealStore = create<MealState>()(persist((set) => ({
+  meals: [],
+  addMeal: (meal) => set((state) => ({ meals: [{ ...meal, id: meal.id ?? `${Date.now()}` }, ...state.meals] })),
+}), {
+  name: 'food-vista-meals',
+  storage: createJSONStorage(() => AsyncStorage),
+  partialize: (state) => ({ meals: state.meals }) as MealState,
+  merge: (persisted, current) => {
+    const data = persisted as { meals?: (Omit<Meal, 'timestamp'> & { timestamp: Date | string })[] } | undefined;
+    return {
+      ...current,
+      meals: (data?.meals ?? []).map((meal) => ({ ...meal, timestamp: new Date(meal.timestamp) })),
+    };
+  },
+}));
+
+let hydration: Promise<void> | undefined;
+function ensureHydrated() {
+  hydration ??= Promise.resolve(useMealStore.persist.rehydrate());
+  return hydration;
 }
-export async function getRecentMeals(uid: string) {
-  if (!db) return [] as Meal[];
-  const since = new Date(); since.setDate(since.getDate() - 7);
-  const q = query(collection(db, 'users', uid, 'meals'), where('timestamp', '>=', Timestamp.fromDate(since)), orderBy('timestamp', 'desc'));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => { const data = doc.data(); return { id: doc.id, ...data, timestamp: (data.timestamp as Timestamp).toDate() } as Meal; });
+
+export async function saveMeal(_uid: string, meal: Meal) {
+  await ensureHydrated();
+  useMealStore.getState().addMeal(meal);
+}
+
+export async function getRecentMeals(_uid: string) {
+  await ensureHydrated();
+  const since = new Date();
+  since.setDate(since.getDate() - 7);
+  return useMealStore.getState().meals
+    .filter((meal) => meal.timestamp >= since)
+    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 }
